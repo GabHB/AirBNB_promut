@@ -105,7 +105,7 @@ listings_model$bedrooms<- ifelse(is.na(listings_model$bedrooms), 0, listings_mod
   # 
   # out<- read.table(text = bdy2, sep=",", header = FALSE, col.names = 'amenities')
   # 
-  # test<- out %>% 
+  # test<- out %>%
   #   mutate( amenities= tolower(amenities))%>%
   #   group_by(amenities) %>%
   #   summarise( n= n())
@@ -115,10 +115,10 @@ listings_model$bedrooms<- ifelse(is.na(listings_model$bedrooms), 0, listings_mod
 # parking (free parking) (free street parking) !
 # Wifi                                         !
 # kitchen                                      !
-# refrigerator                                 ! 
+# refrigerator                                 ! trop d'incertitude avec cette variable
 # free washer and washer(solo)                 !
-# oven                                         !
-# stove                                        ! 
+# oven                                         ! trop d'incertitude avec cette variable
+# stove                                        ! trop d'incertitude avec cette variable
 # patio or balcony                             !                   
 # hot tub                                      !  
 # pool                                         !  
@@ -164,9 +164,11 @@ listings_model$kitchen<- ifelse(grepl("kitchen",listings_model$amenities), 1, 0)
 
 
 
-# create the washer column  note: little problem with dishwasher
+# create the washer column  note: little problem with dishwasher counting as washer resolved by putting a space and a beggining of line
 listings_model$washer<- 0
-listings_model$washer<- ifelse(grepl("washer",listings_model$amenities) & !grepl("paid washer",listings_model$amenities), 1, 0)
+listings_model$washer<- ifelse(grepl(" washer",listings_model$amenities) & !grepl("paid washer",listings_model$amenities), 1, 0)
+listings_model$washer<- ifelse(grepl("^washer",listings_model$amenities) & !grepl("paid washer",listings_model$amenities), 1, listings_model$washer)
+
 
 
 # create the patio or balcony column 
@@ -184,28 +186,39 @@ listings_model$hot_tub<- ifelse(grepl("hot tub",listings_model$amenities), 1, 0)
 
 # create the pool column 
 listings_model$pool<- 0
-listings_model$pool<- ifelse(grepl("pool",listings_model$amenities)  & !grepl("pool table",listings_model$amenities)&
-                               !grepl("whirlpool",listings_model$amenities), 1, 0)
+listings_model$pool<- ifelse(grepl(" pool,",listings_model$amenities), 1, 0)
+listings_model$pool<- ifelse(grepl("^pool",listings_model$amenities), 1, listings_model$pool)
 
 
 
-# create the refrigerator column 
-listings_model$refrigerator<- 0
-listings_model$refrigerator<- ifelse(grepl("refrigerator",listings_model$amenities), 1, 0)
+# # create the refrigerator column 
+# listings_model$refrigerator<- 0
+# listings_model$refrigerator<- ifelse(grepl("refrigerator",listings_model$amenities), 1, 0)
+# 
+# 
+# 
+# # create the stove column 
+# listings_model$stove<- 0
+# listings_model$stove<- ifelse(grepl("stove",listings_model$amenities), 1, 0)
+# 
+# 
+# 
+# # create the oven column 
+# listings_model$oven<- 0
+# listings_model$oven<- ifelse(grepl("oven",listings_model$amenities), 1, 0)
 
 
 
-# create the stove column 
-listings_model$stove<- 0
-listings_model$stove<- ifelse(grepl("stove",listings_model$amenities), 1, 0)
+# create the dedicated workspace column 
+listings_model$dedicated_workspace<- 0
+listings_model$dedicated_workspace<- ifelse(grepl("dedicated workspace",listings_model$amenities), 1, 0)
 
 
 
-# create the oven column 
-listings_model$oven<- 0
-listings_model$oven<- ifelse(grepl("oven",listings_model$amenities), 1, 0)
-
-
+# okok<- listings_model %>%
+#   filter(kitchen == 0)%>%
+#   group_by( stove)%>%
+#   summarise(n=n()) 
 
 
 # Creating my train and my test dataset ------------------------- 
@@ -247,7 +260,7 @@ data_pour_reg <- listings_model %>%
 
 mod1 <- lm(price~., data = data_pour_reg)
 
-
+summary(mod1)
 
 #plot(mod1)
 

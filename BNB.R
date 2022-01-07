@@ -22,7 +22,7 @@ library(randomForest)
 #reviews<- read.csv("reviews.csv")
 #calendar<- read.csv("calendar.csv")
 
-
+# don't forget to set directory
 # Reading data
 listings<- read.csv("listings.csv")
 
@@ -47,7 +47,7 @@ listings_model<- listings[,c(1,28,32:34,36:40)]
 
 
 
-listings_model$id <- as.character(listings_model$id)
+#listings_model$id <- as.character(listings_model$id)
 
 
 
@@ -228,6 +228,7 @@ listings_model<- listings_model %>%
   dplyr::select(-amenities, -property_type) 
 
 
+#create my parameter for my RF for my CV 
 myControl2 <- trainControl(
   method = "cv", 
   number = 10,
@@ -238,13 +239,14 @@ myControl2 <- trainControl(
 
 ind_rand2 <- sample(listings_model$id) 
 
+
 prop <- 0.80
 
-
+#create train dataset 
 donsub_train <- listings_model %>% 
   filter(id %in% ind_rand2[1:round(length(ind_rand2)*prop)]) 
 
-
+#create test dataset 
 donsub_test <- listings_model %>% 
   filter(id %in% ind_rand2[round(length(ind_rand2)*prop)+1:length(ind_rand2)])
 
@@ -269,11 +271,12 @@ summary(mod1)
 # Training my random forest -------------------------
 
 
-
+# training my random forest model 
 modelsub <- train(
   price~., 
   data = donsub_train,  
-  method = 'ranger', 
+  method = 'rf', 
+  ntree = 100,
   trControl = myControl2
 )
 
@@ -281,13 +284,19 @@ sub_train <- predict(modelsub, donsub_test)
 
 donsub_test$sub_train <- sub_train
 
+# create two column to see how close my prediction was to the real number
 donsub_test <- donsub_test %>%
-  mutate(range = ifelse(abs(price-sub_train)<0.15*price,1,0))
+  mutate(range_fifteen = ifelse(abs(price-sub_train)<0.15*price,1,0))%>%
+  mutate(range_ten = ifelse(abs(price-sub_train)<0.1*price,1,0))
 
-plot(sub_train, donsub_test$price)
+#plot(sub_train, donsub_test$price)
+
+#creation of a data frame who show me the percent of close prediction
+matrix_is_good <- as.data.frame(c(sum(donsub_test$range_ten)/nrow(donsub_test),sum(donsub_test$range_fifteen)/nrow(donsub_test)),
+                                row.names = c("range_ten","range_fifteen") )
 
 
-
+names(matrix_is_good)[1] <- 'Percent_good_prediction'
 
 
 
